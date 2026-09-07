@@ -28,5 +28,6 @@ jobs:
             ghcr.io/moket-labs/rreading-glasses:sha-${{ github.sha }}
             ghcr.io/moket-labs/rreading-glasses:latest
           platforms: linux/amd64
+          build-args: RGPATH=./cmd/rggr
           cache-from: type=gha
           cache-to: type=gha,mode=max
