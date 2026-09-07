@@ -10,6 +10,7 @@ import (
 	"iter"
 	"maps"
 	"net/http"
+	"os"
 	"slices"
 	"strings"
 	"time"
@@ -56,6 +57,9 @@ func NewGRGQL(_ context.Context, rate time.Duration, batchSize int, reg *prometh
 	defaultToken, err := hex.DecodeString("6461322d787067736479646b627265676a68707236656a7a716468757779")
 	if err != nil {
 		return nil, err
+	}
+	if configuredToken := os.Getenv("GOODREADS_API_KEY"); configuredToken != "" {
+		defaultToken = []byte(configuredToken)
 	}
 	host, err := hex.DecodeString("68747470733a2f2f6b7862776d716f76366a676733646161616d62373434796375342e61707073796e632d6170692e75732d656173742d312e616d617a6f6e6177732e636f6d2f6772617068716c")
 	if err != nil {
