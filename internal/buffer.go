@@ -92,6 +92,9 @@ type edgebuf struct {
 	works   map[int64]*edge
 	authors map[int64]*edge
 	size    atomic.Int32
+
+	// sizeChanged is called under mu whenever the queued child count changes.
+	sizeChanged func(int)
 }
 
 // push enqueues the edge. If an edge of the same kind was already
@@ -138,6 +141,9 @@ func (b *edgebuf) push(e edge) {
 		b.size.Add(int32(len(e.childIDs)))
 		b.queue = append(b.queue, &e)
 	}
+	if b.sizeChanged != nil {
+		b.sizeChanged(int(b.size.Load()))
+	}
 	b.cond.Signal()
 }
 
@@ -181,6 +187,9 @@ func (b *edgebuf) pop() edge {
 	}
 
 	b.size.Add(-int32(len(edge.childIDs)))
+	if b.sizeChanged != nil {
+		b.sizeChanged(int(b.size.Load()))
+	}
 
 	return *edge
 }

@@ -3,6 +3,10 @@ name: Build moket image
 on:
   push:
     branches: [main]
+    # Configuration delivery (including this guard) must not publish.
+    paths-ignore:
+      - renovate.json
+      - .github/workflows/build-moket-image.yml
   workflow_dispatch:
 
 permissions:
@@ -14,6 +18,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Refuse configuration-only push publication
+        if: github.event_name == 'push'
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          # A paths-filter timeout/large push must still fail closed before login.
+          if git diff --quiet --no-renames "$BEFORE_SHA" "$GITHUB_SHA" -- . \
+            ':(exclude)renovate.json' ':(exclude).github/workflows/build-moket-image.yml'; then
+            echo '::error::Configuration-only push: publication refused.'
+            exit 1
+          else
+            test "$?" -eq 1
+          fi
       - uses: docker/setup-buildx-action@v3
       - uses: docker/login-action@v3
         with:
