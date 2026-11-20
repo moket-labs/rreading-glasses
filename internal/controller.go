@@ -788,7 +788,9 @@ func (c *Controller) Run(ctx context.Context) {
 		}
 	}()
 
-	denormBuf := &edgebuf{}
+	// The accumulator pops after handing an edge to this worker. Sampling
+	// its size here can therefore leave a stale nonzero gauge forever.
+	denormBuf := &edgebuf{sizeChanged: c.metrics.denormWaitingSet}
 	denorms := accumulate(c.denormC, denormBuf)
 	for edge := range denorms {
 		ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
@@ -813,7 +815,6 @@ func (c *Controller) Run(ctx context.Context) {
 			}
 		}
 		cancel()
-		c.metrics.denormWaitingSet(denormBuf.len())
 	}
 }
 
