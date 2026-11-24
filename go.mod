@@ -34,7 +34,7 @@ require (
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0
 	golang.org/x/net v0.52.0
 	golang.org/x/oauth2 v0.30.0
-	golang.org/x/sync v0.20.0
+	golang.org/x/sync v0.25.0
 	gopkg.in/loremipsum.v1 v1.1.2
 )
 
