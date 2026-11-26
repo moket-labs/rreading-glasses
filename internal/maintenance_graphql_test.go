@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/graphql-go/graphql/language/parser"
@@ -50,6 +51,27 @@ fragment MaintenanceBookFields on Book { id }`
 	for _, id := range []string{first, second} {
 		require.Contains(t, built, id+": book(id: $"+id+"_id)")
 		require.Contains(t, built, "@include(if: $"+id+"_include)")
+	}
+}
+
+func TestBatchAliasContractConcurrentBuilders(t *testing.T) {
+	for worker := range 16 {
+		t.Run(fmt.Sprint(worker), func(t *testing.T) {
+			t.Parallel()
+			// Each builder belongs to a separate client. Use an operation without
+			// fragments so this exercises the shared random source, not the fragment cache.
+			for value := range 16 {
+				qb := newQueryBuilder()
+				id, field, err := qb.add(`query Book($id: Int!) { book(id: $id) { id } }`, map[string]any{"id": value})
+				require.NoError(t, err)
+				require.Equal(t, "book", field)
+				require.Regexp(t, `^[A-Za-z]{8}$`, id)
+				query, vars, err := qb.build()
+				require.NoError(t, err)
+				require.Equal(t, map[string]any{id + "_id": value}, vars)
+				require.Contains(t, query, fmt.Sprintf("%s: book(id: $%s_id)", id, id))
+			}
+		})
 	}
 }
 
